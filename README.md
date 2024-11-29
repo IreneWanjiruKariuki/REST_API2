@@ -74,11 +74,14 @@ Follow the following steps to create and run the project:
 
 ## Create main.py
 
-This file is created inside the app folder which in thes case is the prodects folder. This where the GET and POST endpoints are created.
+The code sends an HTTP GET request to a local server at http://127.0.0.1:8000/products/ using the requests library. It retrieves the response from the server and stores the raw response text in the products variable.
+
+## Create server.py
+This is where the GET and POST endpoints are created.
 
 ## Create schemas.py
 
-This file is created inside the app folder which in thes case is the prodects folder. This is where the schema of the modcedl created is created.
+This file is created inside the app folder which in thes case is the projects folder. This is where the schema of the model created is created.
 
 ```bash
 from pydantic import BaseModel
@@ -91,3 +94,81 @@ class ProductsResponse(BaseModel):
     class Config:
         orm_mode = True
 ```
+
+## Create services.py
+This file is created inside the app folder which in thes case is the projects folder. This is where the python scripts are written.
+
+```bash
+import requests
+from Schemas.schemas import ProductResponse
+
+PRODUCTS_URL = "http://127.0.0.1:8000/products/"
+
+def get_all_products() -> list[ProductResponse]:
+    response = requests.get(f"{PRODUCTS_URL}/get")
+    response.raise_for_status()
+    products = response.json()
+    return [
+        ProductResponse(
+            
+            name=product["name"],
+            description=product.get("description","Unknown")[0],
+            price=product.get("price", 0),
+            
+        )
+        for product in products
+    ]
+
+def add_product(name,description,price) -> ProductResponse:
+    
+    product_data= {"name": name,
+                   "description": description,
+                   "price": price}
+    response = requests.post(f"{PRODUCTS_URL}/add",json=product_data)
+    response.raise_for_status()
+    product = response.json()
+    
+    return ProductResponse(
+            name=product["name"],
+            description=product.get("description","Unknown"),
+            price=product.get("price", 0.00),
+        )
+```
+
+## Create routes.py
+This file is created inside the app folder which in thes case is the projects folder.
+
+```bash
+from fastapi import APIRouter, HTTPException, Query
+from Schemas.schemas import ProductResponse
+
+from Services.services import (
+    get_all_products,
+    add_product,
+)
+
+router = APIRouter()
+
+@router.get("/get", response_model=list[ProductResponse])
+async def read_all_products():
+    try:
+        return get_all_products()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.post("/add",response_model=ProductResponse)
+async def adding_a_product(name,description,price):
+    try:
+        product= add_product(name,description,price)
+        return product + HTTPException(status_code=201)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
+## Testing manually
+Using the browser open the link:
+```bash
+http://127.0.0.1:8000/docs
+```
+
+## Testing with python scripts
+Run the routes.py file that contains the execution of the python scripts.
