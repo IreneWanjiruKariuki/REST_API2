@@ -6,4 +6,4 @@ class ProductResponse(BaseModel):
     price: float
     
     class Config:
-        from_attributes = True
+        orm_model = True

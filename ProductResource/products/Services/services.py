@@ -3,7 +3,7 @@ from Schemas.schemas import ProductResponse
 
 PRODUCTS_URL = "http://127.0.0.1:8000/products/"
 
-def read_root() -> list[ProductResponse]:
+def get_all_products() -> list[ProductResponse]:
     response = requests.get(f"{PRODUCTS_URL}/get")
     response.raise_for_status()
     products = response.json()
@@ -18,7 +18,7 @@ def read_root() -> list[ProductResponse]:
         for product in products
     ]
 
-def create_product_data(name,description,price) -> ProductResponse:
+def add_product(name,description,price) -> ProductResponse:
     
     product_data= {"name": name,
                    "description": description,
